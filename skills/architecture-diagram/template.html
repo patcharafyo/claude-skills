@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="en" data-accent="orange">
+<!-- Template for the architecture-diagram skill. A finished, real page: copy it,
+     keep the <style> block as is, and replace the content. -->
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LLM Harness Architecture</title>
+<style>
+  /* ── Architecture diagram house style ─────────────────────────────────
+     Accent: set data-accent on <html> to orange (default), blue, green, teal,
+     purple, red or graphite. Theme: leave data-theme off to follow the
+     viewer's system, or set data-theme="light" / "dark" to force one.
+     Never hard-code colours in the SVG; use the classes below.          */
+
+  /* Accent presets: one rule each, light (-l) and dark (-d) values.
+     All pass scripts/accent.py check. Add a brand rule with accent.py make. */
+  :root                          { --accent-l: #b4510f; --accent-soft-l: #fdf1e8; --accent-d: #f09a5c; --accent-soft-d: #3a291c; }
+  :root[data-accent="blue"]      { --accent-l: #1d5bbf; --accent-soft-l: #ebf2fc; --accent-d: #7eaef5; --accent-soft-d: #1c2a40; }
+  :root[data-accent="green"]     { --accent-l: #1d7646; --accent-soft-l: #e8f5ed; --accent-d: #63c48e; --accent-soft-d: #19322a; }
+  :root[data-accent="teal"]      { --accent-l: #0e6f7a; --accent-soft-l: #e4f3f4; --accent-d: #4fc1cc; --accent-soft-d: #163236; }
+  :root[data-accent="purple"]    { --accent-l: #5b45b5; --accent-soft-l: #f0edfb; --accent-d: #a99bf2; --accent-soft-d: #262242; }
+  :root[data-accent="red"]       { --accent-l: #b3262f; --accent-soft-l: #fcecec; --accent-d: #f28b8f; --accent-soft-d: #3c1f22; }
+  :root[data-accent="graphite"]  { --accent-l: #3d4856; --accent-soft-l: #eceff3; --accent-d: #b6c0cc; --accent-soft-d: #2b3138; }
+
+  /* Neutrals (light) */
+  :root {
+    color-scheme: light;
+    --page: #ffffff;
+    --ink: #1c2024;
+    --muted: #5b6470;
+    --line: #aeb6c0;
+    --zone: #f5f6f8;
+    --box: #ffffff;
+    --soft: #e8ebef;
+    --accent: var(--accent-l);
+    --accent-soft: var(--accent-soft-l);
+  }
+  /* Neutrals (dark): same values in both blocks */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --page: #16181b;
+      --ink: #eceef0;
+      --muted: #a3acb6;
+      --line: #626b75;
+      --zone: #1f2226;
+      --box: #2a2e33;
+      --soft: #363b41;
+      --accent: var(--accent-d);
+      --accent-soft: var(--accent-soft-d);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #16181b;
+    --ink: #eceef0;
+    --muted: #a3acb6;
+    --line: #626b75;
+    --zone: #1f2226;
+    --box: #2a2e33;
+    --soft: #363b41;
+    --accent: var(--accent-d);
+    --accent-soft: var(--accent-soft-d);
+  }
+
+  /* Page */
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--page);
+    color: var(--ink);
+    font: 16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 1240px; margin: 0 auto; padding: 40px 24px 64px; }
+  h1 { margin: 0 0 8px; font-size: 30px; line-height: 1.2; letter-spacing: -0.01em; text-wrap: balance; }
+  h2 { margin: 48px 0 8px; font-size: 21px; line-height: 1.3; }
+  p { margin: 0 0 12px; max-width: 76ch; }
+  .lede { color: var(--muted); font-size: 17px; }
+  figure { margin: 20px 0 0; }
+  figcaption { margin-top: 12px; color: var(--muted); font-size: 14px; max-width: 86ch; }
+  .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .scroll:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+  .hint { display: none; margin: 12px 0 0; color: var(--muted); font-size: 13px; }
+
+  /* SVG shapes */
+  svg { display: block; width: 100%; height: auto; color: var(--ink); }
+  svg text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; fill: var(--ink); }
+  .zone  { fill: var(--zone); stroke: var(--line); stroke-width: 1; }
+  .group { fill: none; stroke: var(--line); stroke-width: 1; }
+  .box   { fill: var(--box); stroke: var(--line); stroke-width: 1; }
+  .chip  { fill: var(--soft); stroke: none; }
+  .hot   { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.5; }
+  .edge      { fill: none; stroke: currentColor; stroke-width: 1.4; }
+  .edge-hot  { fill: none; stroke: var(--accent); stroke-width: 1.8; }
+  .edge-dash { fill: none; stroke: var(--muted); stroke-width: 1.3; stroke-dasharray: 5 4; }
+  .halo { fill: none; stroke: var(--zone); stroke-width: 7; }
+  .marker-ink   { fill: currentColor; }
+  .marker-hot   { fill: var(--accent); }
+  .marker-muted { fill: var(--muted); }
+  .badge { fill: var(--ink); }
+  /* Graphite is close to ink, so highlighted lines carry the difference by weight */
+  :root[data-accent="graphite"] .hot { stroke-width: 2.2; }
+  :root[data-accent="graphite"] .edge-hot { stroke-width: 2.6; }
+
+  /* SVG text: z zone label · t box title · s subtitle · l edge label
+     ct/cs chip title/subtitle · n badge number · m centred */
+  svg text.z  { font-size: 13px; font-weight: 650; }
+  svg text.t  { font-size: 13.5px; font-weight: 650; }
+  svg text.s  { font-size: 11.5px; fill: var(--muted); }
+  svg text.l  { font-size: 11.5px; }
+  svg text.ct { font-size: 12.5px; font-weight: 650; }
+  svg text.cs { font-size: 11px; fill: var(--muted); }
+  svg text.n  { font-size: 11px; font-weight: 700; fill: var(--page); text-anchor: middle; font-variant-numeric: tabular-nums; }
+  svg text.m  { text-anchor: middle; }
+
+  /* Connection table, rules, footer */
+  table { width: 100%; margin-top: 16px; border-collapse: collapse; font-size: 14.5px; }
+  th, td { padding: 10px 14px 10px 0; border-bottom: 1px solid var(--soft); text-align: left; vertical-align: top; }
+  th { color: var(--muted); font-size: 13px; font-weight: 600; }
+  td:first-child { width: 44px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  td:nth-child(2) { width: 27%; font-weight: 550; }
+  td:nth-child(3) { width: 28%; }
+  ul { margin: 12px 0 0; padding-left: 20px; max-width: 80ch; }
+  li { margin-bottom: 8px; }
+  li::marker { color: var(--accent); }
+  footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--soft); color: var(--muted); font-size: 13px; }
+  code { font: 0.92em ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+  /* Narrow screens: diagrams scroll sideways, table stacks */
+  @media (max-width: 900px) {
+    main { padding: 28px 16px 48px; }
+    h1 { font-size: 26px; }
+    .scroll svg { width: 900px; max-width: none; }
+    .hint { display: block; }
+  }
+  @media (max-width: 640px) {
+    thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    table, tbody, tr, td { display: block; width: auto; }
+    tr { padding: 12px 0; border-bottom: 1px solid var(--soft); }
+    td, td:first-child, td:nth-child(2), td:nth-child(3) { width: auto; padding: 0 0 4px; border: 0; }
+    td:first-child::before { content: "Connection "; color: var(--muted); font-weight: 500; }
+  }
+
+  /* Print / PDF: full width, no scroll, keep figures on one page */
+  @media print {
+    main { max-width: none; padding: 0; }
+    .scroll { overflow: visible; }
+    .scroll svg { width: 100%; }
+    .hint { display: none !important; }
+    figure, tr { break-inside: avoid; }
+    h2 { break-after: avoid; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>How LLM Harness fits together</h1>
+  <p class="lede">A message starts in the browser, runs through a harness inside Azure App Service, reaches the models through LiteLLM, and runs code on a separate Azure VM.</p>
+
+  <h2>The whole system</h2>
+  <figure>
+    <div class="scroll" tabindex="0" role="region" aria-label="System block diagram, scrollable">
+      <svg viewBox="0 0 1200 740" role="img" aria-label="Block diagram. User input enters the web app, which talks to a web server in Azure App Service. The server queues a task and starts one of four harness runtimes. The harness sends model requests through a model bridge to the LiteLLM gateway and its models, and sends tool calls through tool dispatch to a shared Azure VM that runs project containers. The app saves to a database and project files. The browser opens app previews directly through a gateway on the VM.">
+        <defs>
+          <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="marker-ink" d="M0 1 L9 5 L0 9 Z"/></marker>
+          <marker id="h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="marker-hot" d="M0 1 L9 5 L0 9 Z"/></marker>
+          <marker id="d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="marker-muted" d="M0 1 L9 5 L0 9 Z"/></marker>
+        </defs>
+
+        <!-- Zones -->
+        <rect class="zone" x="20" y="20" width="1160" height="112" rx="14"/>
+        <text class="z" x="36" y="42">User's device</text>
+        <rect class="zone" x="360" y="172" width="480" height="564" rx="14"/>
+        <text class="z" x="376" y="194">Azure App Service</text>
+        <text class="s" x="824" y="194" text-anchor="end">one container, one copy</text>
+        <rect class="zone" x="20" y="370" width="260" height="262" rx="14"/>
+        <text class="z" x="36" y="392">AI gateway (shared service)</text>
+        <rect class="zone" x="920" y="172" width="260" height="460" rx="14"/>
+        <text class="z" x="936" y="194">Azure VM: shared runner</text>
+
+        <!-- Legend -->
+        <text class="z" x="20" y="186">How to read this</text>
+        <line class="edge" x1="20" y1="212" x2="62" y2="212" marker-end="url(#a)"/>
+        <text class="l" x="74" y="216">Used while the app runs</text>
+        <line class="edge-dash" x1="20" y1="238" x2="62" y2="238" marker-end="url(#d)"/>
+        <text class="l" x="74" y="242">Used only when deploying</text>
+        <line class="edge-hot" x1="20" y1="264" x2="62" y2="264" marker-end="url(#h)"/>
+        <text class="l" x="74" y="268">The harness and its two paths out</text>
+        <circle class="badge" cx="41" cy="290" r="10"/><text class="n" x="41" y="294">1</text>
+        <text class="l" x="74" y="294">Numbered in the table below</text>
+
+        <!-- Boxes: device -->
+        <rect class="box" x="60" y="54" width="240" height="62" rx="9"/>
+        <text class="t m" x="180" y="80">User input</text>
+        <text class="s m" x="180" y="99">message, files, mode, harness, model</text>
+        <rect class="box" x="420" y="54" width="360" height="62" rx="9"/>
+        <text class="t m" x="600" y="80">LLM Harness web app</text>
+        <text class="s m" x="600" y="99">browser or macOS desktop client · Chat, Work, Build</text>
+
+        <!-- Boxes: App Service -->
+        <rect class="box" x="380" y="206" width="440" height="58" rx="9"/>
+        <text class="t m" x="600" y="230">Web server (Express)</text>
+        <text class="s m" x="600" y="249">sign-in · projects · files · live result stream</text>
+        <rect class="box" x="380" y="294" width="440" height="58" rx="9"/>
+        <text class="t m" x="600" y="318">Task queue</text>
+        <text class="s m" x="600" y="337">up to 20 tasks · keeps each task's chosen harness</text>
+
+        <rect class="hot" x="380" y="384" width="440" height="112" rx="10"/>
+        <text class="t m" x="600" y="406">Harness runtime: one chosen per task</text>
+        <rect class="chip" x="390" y="420" width="99" height="62" rx="7"/>
+        <text class="ct m" x="439.5" y="447">DeepSeek</text><text class="cs m" x="439.5" y="465">built-in engine</text>
+        <rect class="chip" x="497" y="420" width="99" height="62" rx="7"/>
+        <text class="ct m" x="546.5" y="447">Claude</text><text class="cs m" x="546.5" y="465">Claude Code CLI</text>
+        <rect class="chip" x="604" y="420" width="99" height="62" rx="7"/>
+        <text class="ct m" x="653.5" y="447">Codex</text><text class="cs m" x="653.5" y="465">Codex CLI</text>
+        <rect class="chip" x="711" y="420" width="99" height="62" rx="7"/>
+        <text class="ct m" x="760.5" y="447">Copilot</text><text class="cs m" x="760.5" y="465">Copilot runtime</text>
+
+        <rect class="hot" x="380" y="540" width="210" height="72" rx="9"/>
+        <text class="t m" x="485" y="570">Model bridge</text>
+        <text class="s m" x="485" y="590">provider layer holds the key</text>
+        <rect class="hot" x="610" y="540" width="210" height="72" rx="9"/>
+        <text class="t m" x="715" y="570">Tool dispatch</text>
+        <text class="s m" x="715" y="590">checks permission, records</text>
+
+        <rect class="box" x="380" y="650" width="210" height="70" rx="9"/>
+        <text class="t m" x="485" y="679">Database</text>
+        <text class="s m" x="485" y="699">embedded PostgreSQL + journal</text>
+        <rect class="box" x="610" y="650" width="210" height="70" rx="9"/>
+        <text class="t m" x="715" y="679">Project files</text>
+        <text class="s m" x="715" y="699">/home · LibreOffice for documents</text>
+
+        <!-- Boxes: AI gateway -->
+        <rect class="box" x="36" y="404" width="228" height="92" rx="9"/>
+        <text class="t m" x="150" y="426">LLM models and AI services</text>
+        <text class="s m" x="150" y="446">GPT-6.1 Sol and other catalog models</text>
+        <text class="s m" x="150" y="463">OCR · embeddings · web search</text>
+        <text class="s m" x="150" y="480">images · voice</text>
+        <rect class="box" x="36" y="540" width="228" height="72" rx="9"/>
+        <text class="t m" x="150" y="570">LiteLLM gateway</text>
+        <text class="s m" x="150" y="590">Azure Container App · aigw-ca-prd</text>
+
+        <!-- Boxes: VM -->
+        <rect class="box" x="936" y="206" width="228" height="60" rx="9"/>
+        <text class="t m" x="1050" y="231">Preview gateway</text>
+        <text class="s m" x="1050" y="250">owner's signed access only</text>
+        <rect class="box" x="936" y="316" width="228" height="164" rx="9"/>
+        <text class="t m" x="1050" y="340">Project containers</text>
+        <rect class="chip" x="948" y="354" width="98" height="46" rx="7"/>
+        <text class="ct m" x="997" y="382">Project A</text>
+        <rect class="chip" x="1054" y="354" width="98" height="46" rx="7"/>
+        <text class="ct m" x="1103" y="382">Project B</text>
+        <text class="s m" x="1050" y="422">up to 20 active · 5 GiB disk each</text>
+        <text class="s m" x="1050" y="442">Python · Node · JupyterLab</text>
+        <text class="s m" x="1050" y="462">no LLM keys, no Harness login</text>
+        <rect class="box" x="936" y="540" width="228" height="72" rx="9"/>
+        <text class="t m" x="1050" y="570">Runner controller</text>
+        <text class="s m" x="1050" y="590">starts, stops, runs commands</text>
+
+        <!-- Registry -->
+        <rect class="box" x="920" y="660" width="260" height="60" rx="9"/>
+        <text class="t m" x="1050" y="685">Azure Container Registry</text>
+        <text class="s m" x="1050" y="704">app image · project image</text>
+
+        <!-- Edges -->
+        <line class="edge" x1="300" y1="85" x2="420" y2="85" marker-end="url(#a)"/>
+        <text class="l m" x="360" y="70">types and picks</text>
+
+        <line class="edge" x1="600" y1="116" x2="600" y2="206" marker-start="url(#a)" marker-end="url(#a)"/>
+        <text class="l" x="618" y="156">HTTPS: messages up, live results back</text>
+
+        <line class="edge" x1="600" y1="264" x2="600" y2="294" marker-end="url(#a)"/>
+        <text class="l" x="636" y="283">queues the task</text>
+
+        <line class="edge" x1="600" y1="352" x2="600" y2="384" marker-end="url(#a)"/>
+        <text class="l" x="636" y="372">starts the chosen harness</text>
+
+        <line class="edge-hot" x1="485" y1="496" x2="485" y2="540" marker-start="url(#h)" marker-end="url(#h)"/>
+        <text class="l" x="497" y="522">model requests</text>
+        <line class="edge-hot" x1="715" y1="496" x2="715" y2="540" marker-start="url(#h)" marker-end="url(#h)"/>
+        <text class="l" x="727" y="522">tool calls</text>
+
+        <path class="edge" d="M380 323 H370 V685 H380" marker-end="url(#a)"/>
+        <text class="l" x="386" y="635">saves task history</text>
+        <line class="edge" x1="715" y1="612" x2="715" y2="650" marker-start="url(#a)" marker-end="url(#a)"/>
+        <text class="l" x="727" y="635">reads, writes</text>
+
+        <line class="halo" x1="376" y1="576" x2="364" y2="576"/>
+        <line class="edge-hot" x1="380" y1="576" x2="264" y2="576" marker-start="url(#h)" marker-end="url(#h)"/>
+        <text class="l m" x="320" y="558">HTTPS</text>
+        <text class="l m" x="320" y="604">gateway key</text>
+        <line class="edge" x1="150" y1="540" x2="150" y2="496" marker-start="url(#a)" marker-end="url(#a)"/>
+        <text class="l" x="162" y="522">routes by model</text>
+
+        <line class="edge-hot" x1="820" y1="576" x2="936" y2="576" marker-start="url(#h)" marker-end="url(#h)"/>
+        <text class="l m" x="880" y="558">private VNet</text>
+        <text class="l m" x="880" y="604">pinned SSH</text>
+        <line class="edge" x1="1050" y1="540" x2="1050" y2="480" marker-start="url(#a)" marker-end="url(#a)"/>
+        <text class="l" x="1062" y="514">Docker, with limits</text>
+
+        <path class="edge" d="M780 85 H1130 V206" marker-end="url(#a)"/>
+        <text class="l m" x="955" y="76">opens an app preview: HTTPS + signed grant</text>
+        <line class="edge" x1="1050" y1="266" x2="1050" y2="316" marker-end="url(#a)"/>
+        <text class="l" x="1062" y="295">forwards traffic</text>
+
+        <line class="edge-dash" x1="920" y1="690" x2="840" y2="690" marker-end="url(#d)"/>
+        <text class="l m" x="880" y="680">pulls image</text>
+        <line class="edge-dash" x1="1050" y1="660" x2="1050" y2="632" marker-end="url(#d)"/>
+        <text class="l" x="1062" y="650">pulls image</text>
+
+        <!-- Numbered badges -->
+        <circle class="badge" cx="360" cy="85" r="10"/><text class="n" x="360" y="89">1</text>
+        <circle class="badge" cx="600" cy="152" r="10"/><text class="n" x="600" y="156">2</text>
+        <circle class="badge" cx="620" cy="279" r="10"/><text class="n" x="620" y="283">3</text>
+        <circle class="badge" cx="620" cy="368" r="10"/><text class="n" x="620" y="372">4</text>
+        <circle class="badge" cx="467" cy="518" r="10"/><text class="n" x="467" y="522">5</text>
+        <circle class="badge" cx="320" cy="576" r="10"/><text class="n" x="320" y="580">6</text>
+        <circle class="badge" cx="132" cy="518" r="10"/><text class="n" x="132" y="522">7</text>
+        <circle class="badge" cx="697" cy="518" r="10"/><text class="n" x="697" y="522">8</text>
+        <circle class="badge" cx="880" cy="576" r="10"/><text class="n" x="880" y="580">9</text>
+        <circle class="badge" cx="1032" cy="510" r="10"/><text class="n" x="1032" y="514">10</text>
+        <circle class="badge" cx="1130" cy="152" r="10"/><text class="n" x="1130" y="156">11</text>
+        <circle class="badge" cx="370" cy="631" r="10"/><text class="n" x="370" y="635">12</text>
+        <circle class="badge" cx="697" cy="631" r="10"/><text class="n" x="697" y="635">12</text>
+        <circle class="badge" cx="880" cy="702" r="10"/><text class="n" x="880" y="706">13</text>
+      </svg>
+    </div>
+    <p class="hint">Scroll sideways to see the whole diagram. The table below lists every connection.</p>
+    <figcaption>The harness in the middle decides each next step. Everything it needs from outside goes through one of two exits: the model path on the left or the tool path on the right.</figcaption>
+  </figure>
+
+  <h2>What each connection carries</h2>
+  <table>
+    <thead><tr><th>#</th><th>Connection</th><th>How it connects</th><th>What it carries</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>User input → web app</td><td>Typing, uploads and pickers</td><td>The message, attached files, Chat, Work or Build, and the harness and model choices</td></tr>
+      <tr><td>2</td><td>Web app ↔ web server</td><td>HTTPS, with a live event stream back</td><td>Requests go up. Text, tool progress and results come back as they happen</td></tr>
+      <tr><td>3</td><td>Web server → task queue</td><td>Inside the app</td><td>The accepted task. Up to 20 tasks run across the app</td></tr>
+      <tr><td>4</td><td>Task queue → harness</td><td>Inside the app</td><td>The task and the tools it may use. The harness stays the same through queuing and retries</td></tr>
+      <tr><td>5</td><td>Harness ↔ model bridge</td><td>Loopback or in-process, shown in the next diagram</td><td>Each request for the model's next step, and its reply</td></tr>
+      <tr><td>6</td><td>Model bridge ↔ LiteLLM</td><td>HTTPS with the gateway API key</td><td>Model requests and replies, plus search, OCR, embedding, image and voice calls from the app</td></tr>
+      <tr><td>7</td><td>LiteLLM ↔ models</td><td>Managed by the gateway</td><td>The request, sent to whichever model the selected connection names</td></tr>
+      <tr><td>8</td><td>Harness ↔ tool dispatch</td><td>Inside the app, or the bridge's tool route</td><td>Tool calls and results. Dispatch checks each call against what this run was allowed</td></tr>
+      <tr><td>9</td><td>Tool dispatch ↔ runner controller</td><td>Private network, restricted SSH, pinned host key</td><td>Commands to run, environment starts and stops, and file sync</td></tr>
+      <tr><td>10</td><td>Controller ↔ project containers</td><td>Docker on the VM</td><td>Commands and files, one container per project, with CPU, memory, process and disk limits</td></tr>
+      <tr><td>11</td><td>Web app → preview gateway → container</td><td>HTTPS with a 60-second, single-use signed grant, then a 30-minute cookie</td><td>The owner's view of a running app or JupyterLab. This path skips the App Service</td></tr>
+      <tr><td>12</td><td>App ↔ database and project files</td><td>Local storage on the App Service <code>/home</code> share</td><td>Accounts, projects, conversations, task history, uploads and generated files</td></tr>
+      <tr><td>13</td><td>Registry → App Service and VM</td><td>Image pull, at deployment or start-up</td><td>The app image for the App Service and the project image for the VM</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Inside the harness: how each CLI connects</h2>
+  <p>The CLIs think and choose the next step, but the application makes every outside call for them.</p>
+  <figure>
+    <div class="scroll" tabindex="0" role="region" aria-label="Harness detail diagram, scrollable">
+      <svg viewBox="0 0 1200 430" role="img" aria-label="Harness detail. The DeepSeek engine runs inside the app process and calls the application core directly. The Claude Code CLI, Codex CLI and Copilot runtime are child processes that talk to a model bridge on 127.0.0.1 using a token for that run. The bridge passes model requests to the provider layer, which holds the gateway key and calls LiteLLM, and passes tool calls to tool dispatch, which reaches the VM runner, files and services.">
+        <defs>
+          <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="marker-ink" d="M0 1 L9 5 L0 9 Z"/></marker>
+          <marker id="h2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="marker-hot" d="M0 1 L9 5 L0 9 Z"/></marker>
+        </defs>
+        <rect class="zone" x="20" y="20" width="1040" height="390" rx="14"/>
+        <text class="z" x="36" y="44">Azure App Service container</text>
+
+        <rect class="box" x="44" y="62" width="210" height="60" rx="9"/>
+        <text class="t m" x="149" y="87">DeepSeek engine</text>
+        <text class="s m" x="149" y="106">runs inside the app process</text>
+
+        <rect class="group" x="36" y="136" width="226" height="258" rx="10"/>
+        <text class="s m" x="149" y="156">child processes, temporary folders</text>
+        <rect class="box" x="44" y="166" width="210" height="58" rx="9"/>
+        <text class="t m" x="149" y="190">Claude Code CLI</text>
+        <text class="s m" x="149" y="209">Claude Agent SDK</text>
+        <rect class="box" x="44" y="238" width="210" height="58" rx="9"/>
+        <text class="t m" x="149" y="262">Codex CLI</text>
+        <text class="s m" x="149" y="281">OpenAI Codex SDK</text>
+        <rect class="box" x="44" y="310" width="210" height="58" rx="9"/>
+        <text class="t m" x="149" y="334">Copilot runtime</text>
+        <text class="s m" x="149" y="353">GitHub Copilot SDK</text>
+
+        <rect class="hot" x="470" y="166" width="180" height="202" rx="10"/>
+        <text class="t m" x="560" y="238">Model bridge</text>
+        <text class="s m" x="560" y="262">127.0.0.1 only</text>
+        <text class="s m" x="560" y="280">token for this run</text>
+        <text class="s m" x="560" y="298">translates formats</text>
+
+        <rect class="zone" x="760" y="56" width="270" height="326" rx="11"/>
+        <text class="z" x="776" y="78">Application core</text>
+        <rect class="box" x="776" y="92" width="238" height="70" rx="9"/>
+        <text class="t m" x="895" y="120">Provider layer</text>
+        <text class="s m" x="895" y="140">holds the gateway key · counts usage</text>
+        <rect class="box" x="776" y="274" width="238" height="72" rx="9"/>
+        <text class="t m" x="895" y="303">Tool dispatch</text>
+        <text class="s m" x="895" y="323">permissions · audit · saved evidence</text>
+
+        <line class="edge" x1="254" y1="92" x2="760" y2="92" marker-start="url(#a2)" marker-end="url(#a2)"/>
+        <text class="l m" x="507" y="82">model and tool calls, with no bridge</text>
+
+        <line class="edge-hot" x1="254" y1="195" x2="470" y2="195" marker-start="url(#h2)" marker-end="url(#h2)"/>
+        <text class="l m" x="362" y="185">Anthropic Messages + SDK tools</text>
+        <line class="edge-hot" x1="254" y1="267" x2="470" y2="267" marker-start="url(#h2)" marker-end="url(#h2)"/>
+        <text class="l m" x="362" y="257">OpenAI Responses + /mcp tools</text>
+        <line class="edge-hot" x1="254" y1="339" x2="470" y2="339" marker-start="url(#h2)" marker-end="url(#h2)"/>
+        <text class="l m" x="362" y="329">OpenAI Responses + SDK tool</text>
+
+        <path class="edge-hot" d="M650 200 H705 V127 H776" marker-start="url(#h2)" marker-end="url(#h2)"/>
+        <text class="l" x="697" y="150" text-anchor="end">model requests</text>
+        <line class="edge-hot" x1="650" y1="310" x2="776" y2="310" marker-start="url(#h2)" marker-end="url(#h2)"/>
+        <text class="l m" x="706" y="300">tool calls</text>
+
+        <line class="edge" x1="1014" y1="127" x2="1100" y2="127" marker-start="url(#a2)" marker-end="url(#a2)"/>
+        <text class="t" x="1108" y="122">LiteLLM</text>
+        <text class="t" x="1108" y="140">gateway</text>
+        <line class="edge" x1="1014" y1="310" x2="1100" y2="310" marker-start="url(#a2)" marker-end="url(#a2)"/>
+        <text class="t" x="1108" y="297">VM runner,</text>
+        <text class="t" x="1108" y="315">files and</text>
+        <text class="t" x="1108" y="333">services</text>
+      </svg>
+    </div>
+    <p class="hint">Scroll sideways to see the whole diagram.</p>
+    <figcaption>Model choice is separate from harness choice: selecting Claude Harness does not select a Claude model. No personal Claude, GitHub or OpenAI login is needed.</figcaption>
+  </figure>
+
+  <h2>Rules this layout enforces</h2>
+  <ul>
+    <li><strong>The CLIs hold no gateway key.</strong> They get only a token for the local bridge, and it lasts for that run.</li>
+    <li><strong>The CLIs' own tools are off.</strong> Their shell, file and web tools are disabled or denied, so all tool use goes through tool dispatch.</li>
+    <li><strong>Generated code is kept apart from the app.</strong> Project containers run as a non-root user with no Harness login, LLM keys, Docker socket or Azure identity. They can't reach private networks or other containers, but they can download public packages. They share the VM's kernel, so this isn't VM-level isolation.</li>
+    <li><strong>Only one copy of the app can run.</strong> It takes an exclusive lock on the database, and the task queue and project environments have one controller.</li>
+  </ul>
+
+  <footer>
+    Reflects the code at commit <code>ea543ad</code>, with live image <code>58a81d4f</code>, on 4 November 2026. Optional connections not drawn: TinyFish for web pages and web agents, Microsoft sign-in and documents, managed PostgreSQL and Blob storage.
+  </footer>
+</main>
+</body>
+</html>
